@@ -11,7 +11,7 @@ export function LoginForm() {
   const passwordId = useId();
   const errorId = useId();
 
-  const [email, setEmail] = useState("admin@company.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -23,7 +23,7 @@ export function LoginForm() {
       setError(t("errEmail"));
       return;
     }
-    if (password.length < 4) {
+    if (password.length < 8) {
       setError(t("errPassword"));
       return;
     }
@@ -41,7 +41,7 @@ export function LoginForm() {
       className="flex w-full max-w-[380px] flex-col gap-5 rounded-card border border-border bg-surface p-7 shadow-card"
     >
       <div className="flex flex-col gap-3.5">
-        <div className="grid size-logo-login place-items-center rounded-md bg-primary text-15 font-semibold text-on-primary">
+        <div className="grid size-logo-login place-items-center rounded-tile bg-primary text-15 font-semibold text-on-primary">
           C
         </div>
         <div className="flex flex-col gap-1">

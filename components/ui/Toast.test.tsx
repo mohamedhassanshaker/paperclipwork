@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import { ToastProvider, useToast } from "./Toast";
+import { Toast, ToastProvider, useToast } from "./Toast";
 
 function Trigger() {
   const { showToast } = useToast();
@@ -31,5 +31,10 @@ describe("Toast", () => {
     });
 
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("layers above a dialog via the z-toast utility (Appendix A: toast 60 > dialog 50)", () => {
+    render(<Toast message="Customer created" />);
+    expect(screen.getByRole("status")).toHaveClass("z-toast");
   });
 });
