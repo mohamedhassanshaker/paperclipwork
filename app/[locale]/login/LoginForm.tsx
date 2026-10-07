@@ -27,7 +27,7 @@ export function LoginForm() {
       setError(t("errEmail"));
       return;
     }
-    if (password.length < 4) {
+    if (password.length < 8) {
       setError(t("errPassword"));
       return;
     }
