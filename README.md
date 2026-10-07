@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Micro CRM
 
-## Getting Started
+A bilingual (EN/AR, full RTL) customer management app. Next.js 15 App Router,
+TypeScript, Tailwind v4, `next-intl`.
 
-First, run the development server:
+## Requirements
+
+- Node >= 24
+- npm
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) — it redirects to the
+default locale (`/en`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Start the dev server (Turbopack) |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build on `$PORT` (default `3000`) — required by Railway |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm test` | Vitest unit/component tests |
+| `npm run format` / `format:check` | Prettier |
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+None are required to run the scaffold in this repo yet. `DATABASE_URL` and
+auth-related variables are introduced by the data-layer and auth tracks.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Locale and RTL
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Routes are locale-prefixed: `/en/...`, `/ar/...` (`next-intl`, `localePrefix: "always"`).
+- The locale preference is persisted in a cookie (`NEXT_LOCALE`), not
+  `localStorage`, so the server can read it and render the correct `dir` and
+  font on the first paint — no LTR flash before hydration.
+- `<html dir>` is derived from the active locale. Styling uses CSS logical
+  properties only (`inset-inline-*`, `margin-inline-*`, `text-start`/`text-end`,
+  etc.) so the layout mirrors correctly under `dir="rtl"`.
+- Design tokens (colour, type, radius, spacing, shadow, z-index) live in
+  `app/globals.css` as a Tailwind v4 `@theme` block, per ADR-001 Appendix A.

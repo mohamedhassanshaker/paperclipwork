@@ -24,6 +24,27 @@ describe("Dialog", () => {
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(dialog).toHaveAttribute("aria-labelledby", "dialog-title");
+    expect(dialog.parentElement).toHaveClass("z-dialog");
+  });
+
+  it("closes on Escape even when focus has moved to the document body", async () => {
+    const onClose = vi.fn();
+    render(<Example open={true} onClose={onClose} />);
+
+    (document.activeElement as HTMLElement | null)?.blur();
+    expect(document.activeElement).toBe(document.body);
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("locks body scroll while open and restores it on close", () => {
+    const { rerender } = render(<Example open={true} onClose={vi.fn()} />);
+    expect(document.body.style.overflow).toBe("hidden");
+
+    rerender(<Example open={false} onClose={vi.fn()} />);
+    expect(document.body.style.overflow).toBe("");
   });
 
   it("closes on Escape", async () => {

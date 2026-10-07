@@ -55,7 +55,7 @@ export function Toast({ message }: { message: string | null }) {
       role="status"
       aria-live="polite"
       className={cn(
-        "fixed bottom-offset end-offset z-toast rounded-md border border-border bg-surface px-4 py-3 text-14 font-medium text-fg shadow-toast",
+        "fixed bottom-offset end-offset z-toast rounded-tile border border-border bg-surface px-4 py-3 text-14 font-medium text-fg shadow-toast",
       )}
     >
       {message}
