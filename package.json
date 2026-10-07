@@ -1,14 +1,14 @@
 {
-  "name": "customer-hub",
+  "name": "micor-crm",
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
-    "start": "next start",
+    "start": "next start -p ${PORT:-3000}",
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

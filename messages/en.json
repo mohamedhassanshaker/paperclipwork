@@ -4,7 +4,7 @@
   "loginSub": "Enter your credentials to manage customers.",
   "email": "Email",
   "password": "Password",
-  "demo": "Demo: any email, password of 4+ characters.",
+  "demo": "Demo: any email, password of 8+ characters.",
   "brand": "Customer Hub",
   "menu": "Menu",
   "signOut": "Sign out",
@@ -50,12 +50,15 @@
   "create": "Create customer",
   "saveChanges": "Save changes",
   "errEmail": "Enter a valid email address.",
-  "errPassword": "Password must be at least 4 characters.",
+  "errPassword": "Password must be at least 8 characters.",
   "errName": "Name is required.",
   "toastCreated": "Customer created",
   "toastUpdated": "Customer updated",
   "toastDeleted": "Customer deleted",
   "months": ["O", "N", "D", "J", "F", "M", "A", "M", "J", "J", "A", "S"],
   "revLabels": ["Oct", "Jan", "Apr", "Jul", "Sep"],
-  "regions": ["UAE", "Saudi Arabia", "United Kingdom", "France", "Other"]
+  "regions": ["UAE", "Saudi Arabia", "United Kingdom", "France", "Other"],
+  "auth": {
+    "rateLimited": "Too many sign-in attempts. Try again in a few minutes."
+  }
 }
