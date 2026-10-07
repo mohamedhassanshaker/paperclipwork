@@ -1,10 +1,12 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 
 export function SignOutButton() {
   const t = useTranslations();
+  const locale = useLocale();
 
   return (
     <Button
@@ -13,7 +15,7 @@ export function SignOutButton() {
       size="sm"
       title={t("signOut")}
       onClick={() => {
-        // TODO(TAH-19): call the real Auth.js sign-out once authentication lands.
+        void signOut({ redirectTo: `/${locale}/login` });
       }}
     >
       {t("signOut")}

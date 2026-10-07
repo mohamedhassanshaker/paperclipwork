@@ -73,6 +73,35 @@ jobs:
             echo "No prisma/schema.prisma yet — skipping (no-op until the data layer lands)."
           fi
 
+  integration-tests:
+    name: integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: customer_hub
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/customer_hub
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npm run test:integration
+
   e2e:
     name: e2e
     runs-on: ubuntu-latest
@@ -95,7 +124,6 @@ jobs:
   npm-audit:
     name: npm audit
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -103,12 +131,12 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm audit --audit-level=high
+      - name: Check against risk-acceptance allowlist
+        run: node .github/scripts/check-npm-audit-allowlist.mjs
 
   secret-scan:
     name: secret scan
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -120,7 +148,6 @@ jobs:
   codeql:
     name: codeql
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       security-events: write
     steps:
@@ -129,3 +156,33 @@ jobs:
         with:
           languages: javascript-typescript
       - uses: github/codeql-action/analyze@v3
+        with:
+          output: codeql-results
+      - name: Fail on error-severity findings
+        run: node .github/scripts/check-codeql-results.mjs codeql-results
+
+  container-scan:
+    name: container scan
+    runs-on: ubuntu-latest
+    # TODO(containerization migration): no Dockerfile exists yet, so this job
+    # is a documented no-op. Drop continue-on-error in the same change that
+    # adds the Dockerfile, so the scan starts gating the build immediately.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        id: build
+        run: |
+          if [ -f Dockerfile ]; then
+            docker build -t ci-scan-target:${{ github.sha }} .
+            echo "built=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Dockerfile yet — skipping (no-op until the containerization migration lands)."
+            echo "built=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Scan image
+        if: steps.build.outputs.built == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ci-scan-target:${{ github.sha }}
+          severity: CRITICAL,HIGH
