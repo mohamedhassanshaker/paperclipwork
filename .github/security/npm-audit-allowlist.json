@@ -1,0 +1,45 @@
+{
+  "description": "GHSA advisories that have been explicitly risk-accepted (SEC-04, TAH-24, Level 2 decision by the CTO). .github/scripts/check-npm-audit-allowlist.mjs fails the `npm audit` CI job on any advisory that is not listed here, or whose reviewBy date has passed. Do not add an entry without a recorded Level 2 risk-acceptance decision.",
+  "accepted": [
+    {
+      "id": "GHSA-qx2v-qp2m-jg93",
+      "package": "postcss",
+      "title": "PostCSS has XSS via Unescaped </style> in its CSS Stringify Output",
+      "rationale": "SEC-04: unreachable in this application — exploitation requires attacker-controlled CSS input or a crafted sourceMappingURL comment. This app only ever compiles first-party CSS through the Next.js build; it never parses user-supplied stylesheets.",
+      "acceptedBy": "CTO (Level 2, TAH-24)",
+      "reviewBy": "2027-01-07"
+    },
+    {
+      "id": "GHSA-6g55-p6wh-862q",
+      "package": "postcss",
+      "title": "PostCSS: Arbitrary file read and information disclosure via attacker-controlled sourceMappingURL in CSS comments",
+      "rationale": "SEC-04: unreachable — same first-party-CSS-only reasoning as GHSA-qx2v-qp2m-jg93; no user-supplied CSS or source maps are ever processed.",
+      "acceptedBy": "CTO (Level 2, TAH-24)",
+      "reviewBy": "2027-01-07"
+    },
+    {
+      "id": "GHSA-fxqj-rqcc-2cmp",
+      "package": "postcss",
+      "title": "PostCSS: incomplete fix of GHSA-6g55-p6wh-862q — attacker-controlled sourceMappingURL reads arbitrary .map files when `from` is unset",
+      "rationale": "SEC-04: unreachable — the incomplete-fix follow-up to GHSA-6g55-p6wh-862q; same first-party-CSS-only reasoning applies.",
+      "acceptedBy": "CTO (Level 2, TAH-24)",
+      "reviewBy": "2027-01-07"
+    },
+    {
+      "id": "GHSA-r28c-9q8g-f849",
+      "package": "postcss",
+      "title": "PostCSS: Path Traversal in Previous Source Map Auto-Loading (sourceMappingURL) leads to Arbitrary .map File Disclosure",
+      "rationale": "SEC-04: unreachable — same first-party-CSS-only reasoning; no attacker-controlled source maps are ever auto-loaded.",
+      "acceptedBy": "CTO (Level 2, TAH-24)",
+      "reviewBy": "2027-01-07"
+    },
+    {
+      "id": "GHSA-ggr8-5vv4-36mx",
+      "package": "deepmerge-ts",
+      "title": "DeepmergeTS has stack exhaustion when merging recursive object graphs",
+      "rationale": "SEC-04: reached only through @prisma/config in the Prisma CLI/migration tooling path, not the application request path — never invoked on untrusted runtime input.",
+      "acceptedBy": "CTO (Level 2, TAH-24)",
+      "reviewBy": "2027-01-07"
+    }
+  ]
+}
