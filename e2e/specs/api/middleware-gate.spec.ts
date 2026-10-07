@@ -22,7 +22,9 @@ test.describe('route-protection gate (TAH-30)', () => {
     // A redirect that Playwright silently followed to the (200, HTML) login
     // page would also satisfy a bare status check — this is the assertion
     // that actually distinguishes that from the real endpoint.
-    expect(await res.json()).toEqual({})
+    // Auth.js v5's unauthenticated /api/auth/session body: a literal `null`,
+    // not `{}` — verified live.
+    expect(await res.json()).toBeNull()
   })
 
   test('unauthenticated GET /api/auth/providers returns 200 JSON, not a redirect to /login', async ({ request }) => {
@@ -61,12 +63,15 @@ test.describe('route-protection gate (TAH-30)', () => {
 
     // Auth.js answers the credentials callback with a redirect on success;
     // the thing that was actually broken (TAH-30) is that it never got this
-    // far at all. Session-token issuance is the real assertion.
+    // far at all — session-token issuance is the real assertion.
     expect([200, 302, 303]).toContain(res.status())
     const setCookieHeaders = res
       .headersArray()
       .filter((h) => h.name.toLowerCase() === 'set-cookie')
       .map((h) => h.value)
-    expect(setCookieHeaders.some((value) => value.includes('authjs.session-token='))).toBe(true)
+    expect(
+      setCookieHeaders.some((value) => value.includes('authjs.session-token=')),
+      `no authjs.session-token in Set-Cookie: ${JSON.stringify(setCookieHeaders)}`,
+    ).toBe(true)
   })
 })

@@ -23,7 +23,13 @@ export async function loginViaUi(
 export async function apiLogin(request: APIRequestContext, email: string, password: string) {
   const csrfRes = await request.get('/api/auth/csrf')
   const { csrfToken } = (await csrfRes.json()) as { csrfToken: string }
+  // maxRedirects: 0 is deliberate — Auth.js answers a successful credentials
+  // callback with a 302 carrying the session cookie. Letting Playwright
+  // auto-follow it chases the redirect through middleware's own locale/page
+  // handling, where the Set-Cookie from this exact hop is what callers need
+  // to assert on; following further hops only risks losing it.
   return request.post('/api/auth/callback/credentials', {
     form: { email, password, csrfToken },
+    maxRedirects: 0,
   })
 }

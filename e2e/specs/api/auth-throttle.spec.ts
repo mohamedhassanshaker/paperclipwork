@@ -25,6 +25,15 @@ test.describe('login throttle (interface-contract §4.1)', () => {
     await resetLoginAttempts()
   })
 
+  // This file deliberately leaves the shared admin account's counter
+  // tripped at the end of the "resets... counter" test (to prove it can be
+  // tripped a second time) — clean up so later files/specs that log in as
+  // the same seeded admin (customers-crud, middleware-gate, login.spec.ts)
+  // don't inherit that state.
+  test.afterAll(async () => {
+    await resetLoginAttempts()
+  })
+
   test('the 11th failed attempt in the window returns 429 with a Retry-After header', async ({ request }) => {
     const email = 'throttle-11th@example.com'
     const ip = '203.0.113.11'
