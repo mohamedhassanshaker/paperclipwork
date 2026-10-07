@@ -1,12 +1,16 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { signIn } from "next-auth/react";
+import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
 export function LoginForm() {
   const t = useTranslations();
+  const locale = useLocale();
+  const router = useRouter();
   const emailId = useId();
   const passwordId = useId();
   const errorId = useId();
@@ -16,7 +20,7 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!/^\S+@\S+\.\S+$/.test(email)) {
@@ -30,9 +34,31 @@ export function LoginForm() {
 
     setError(null);
     setSubmitting(true);
-    // TODO(TAH-19): wire this up to the real Auth.js credentials sign-in
-    // once authentication lands. This handler is a stub.
-    setSubmitting(false);
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      // The server never distinguishes "no such account" from "wrong
+      // password" in the error it returns — only a malformed email and a
+      // rate-limit trip get their own codes — so there is nothing to leak
+      // beyond these three copy strings.
+      if (result.code === "invalid_email") {
+        setError(t("errEmail"));
+      } else if (result.code === "rate_limited") {
+        setError(t("auth.rateLimited"));
+      } else {
+        setError(t("errPassword"));
+      }
+      setSubmitting(false);
+      return;
+    }
+
+    router.push("/dashboard", { locale });
+    router.refresh();
   }
 
   return (
