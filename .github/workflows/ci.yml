@@ -129,3 +129,26 @@ jobs:
         with:
           languages: javascript-typescript
       - uses: github/codeql-action/analyze@v3
+
+  container-scan:
+    name: container scan
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        id: build
+        run: |
+          if [ -f Dockerfile ]; then
+            docker build -t ci-scan-target:${{ github.sha }} .
+            echo "built=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Dockerfile yet — skipping (no-op until the containerization migration lands)."
+            echo "built=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Scan image
+        if: steps.build.outputs.built == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ci-scan-target:${{ github.sha }}
+          severity: CRITICAL,HIGH

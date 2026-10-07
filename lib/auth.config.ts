@@ -16,6 +16,10 @@ export const authConfig = {
     signIn: "/login",
   },
   trustHost: true, // required behind Railway's reverse proxy
+  // Auth.js infers `Secure` from the request/AUTH_URL, which silently
+  // downgrades the session cookie if AUTH_URL is ever misconfigured.
+  // Assert it explicitly instead of relying on inference.
+  useSecureCookies: process.env.NODE_ENV === "production",
   providers: [],
   callbacks: {
     authorized({ auth }) {

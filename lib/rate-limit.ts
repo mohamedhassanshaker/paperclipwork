@@ -45,6 +45,11 @@ export async function loginRetryAfterSeconds(ip: string, email: string): Promise
 }
 
 export async function recordFailedLoginAttempt(ip: string, email: string): Promise<void> {
+  // Opportunistic purge: a failed attempt is the only write this table ever
+  // sees outside of the success-path delete, so it's also the cheapest place
+  // to bound retention — rows are personal data (IP + email) with no
+  // purpose once they've aged out of the throttle window.
+  await prisma.loginAttempt.deleteMany({ where: { createdAt: { lte: windowStart() } } });
   await prisma.loginAttempt.create({ data: { ip, email } });
 }
 
