@@ -7,6 +7,7 @@ import {
   clearLoginAttempts,
   isLoginRateLimited,
   recordFailedLoginAttempt,
+  UNRESOLVED_CLIENT_IP,
 } from "./rate-limit";
 import { loginSchema } from "./validation";
 import { maskEmail } from "./mask";
@@ -39,10 +40,36 @@ function getDummyHash() {
   return dummyHash;
 }
 
+/**
+ * X-Forwarded-For is *appended* to by each proxy hop, so entries are
+ * ordered left (oldest, most attacker-controlled) to right (newest, added
+ * by the hop closest to this service). Railway terminates TLS and proxies
+ * every request through exactly one hop before it reaches this service, so
+ * the one entry we can trust is the last one — the one Railway's edge
+ * itself appended from the connection it observed directly. Everything to
+ * the left is whatever the caller chose to send.
+ *
+ * TRUSTED_PROXY_DEPTH makes that hop count explicit configuration rather
+ * than a hard-coded guess: it's "how many trusted proxies sit in front of
+ * this service", counted from the right. Set to 1 for Railway's current
+ * single-hop topology; bump it only if Railway infrastructure changes to
+ * add another hop in front of the app.
+ */
+function trustedProxyDepth(): number {
+  const parsed = Number.parseInt(process.env.TRUSTED_PROXY_DEPTH ?? "1", 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
+}
+
 export function clientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]!.trim();
-  return request.headers.get("x-real-ip")?.trim() ?? "unknown";
+  if (!forwarded) return UNRESOLVED_CLIENT_IP;
+
+  const hops = forwarded
+    .split(",")
+    .map((hop) => hop.trim())
+    .filter(Boolean);
+  const trustedHop = hops[hops.length - trustedProxyDepth()];
+  return trustedHop ?? UNRESOLVED_CLIENT_IP;
 }
 
 function logLoginAttempt(outcome: string, ip: string, email: string): void {

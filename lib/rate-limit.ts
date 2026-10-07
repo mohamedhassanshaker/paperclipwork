@@ -11,11 +11,24 @@ import { prisma } from "./db";
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 10;
 
+/**
+ * Returned by `clientIp()` (lib/auth.ts) when the trusted hop can't be
+ * identified — X-Forwarded-For missing, or shorter than the configured
+ * trusted-proxy depth. Deliberately a value real traffic can never produce
+ * and attackers can never put in a header, so it can't be used to pool
+ * unrelated callers into one shared bucket. Treated here as fail-closed
+ * (always rate-limited) rather than a normal IP bucket: losing the ability
+ * to attribute a request to a real client is itself a reason to deny it,
+ * not a reason to let it through on a free counter.
+ */
+export const UNRESOLVED_CLIENT_IP = "ip-unresolved";
+
 function windowStart(): Date {
   return new Date(Date.now() - WINDOW_MS);
 }
 
 export async function isLoginRateLimited(ip: string, email: string): Promise<boolean> {
+  if (ip === UNRESOLVED_CLIENT_IP) return true;
   const since = windowStart();
   const [ipCount, emailCount] = await Promise.all([
     prisma.loginAttempt.count({ where: { ip, createdAt: { gt: since } } }),
@@ -26,6 +39,7 @@ export async function isLoginRateLimited(ip: string, email: string): Promise<boo
 
 /** Seconds until the oldest attempt in either window ages out. 0 if neither counter is tripped. */
 export async function loginRetryAfterSeconds(ip: string, email: string): Promise<number> {
+  if (ip === UNRESOLVED_CLIENT_IP) return WINDOW_MS / 1000;
   const since = windowStart();
   const [oldestIp, oldestEmail] = await Promise.all([
     prisma.loginAttempt.findFirst({
