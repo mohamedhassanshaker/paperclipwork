@@ -1,7 +1,8 @@
 import { randomBytes } from 'node:crypto'
-import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
+import { execFile, execFileSync, spawn, type ChildProcess } from 'node:child_process'
 import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
+import { promisify } from 'node:util'
 import { PGlite } from '@electric-sql/pglite'
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
 import { Client } from 'pg'
@@ -41,11 +42,14 @@ async function setupDatabase(): Promise<() => Promise<void>> {
   const url = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres?connection_limit=1&pgbouncer=true`
 
   const db = await PGlite.create()
-  // maxConnections: 1, matching tests/integration/setup/global-setup.ts —
-  // PGlite's socket multiplexer does not reliably support concurrent
-  // connections, so every consumer (migrations, seed script, the app
-  // itself) must serialize through this one logical connection slot.
-  const server = new PGLiteSocketServer({ db, port, host: '127.0.0.1', maxConnections: 1 })
+  // tests/integration/setup/global-setup.ts uses maxConnections: 1 safely
+  // because it only ever drives the repository directly in-process. This
+  // suite also boots a live `next dev` server (its own process, holding its
+  // own pooled connection) while spec files that need direct DB assertions
+  // (e2e/support/db.ts) open a second, independent PrismaClient — two
+  // concurrent consumers, so a single-connection cap starves whichever
+  // connects second with an unhelpful "can't reach database server".
+  const server = new PGLiteSocketServer({ db, port, host: '127.0.0.1', maxConnections: 10 })
   await server.start()
 
   process.env.DATABASE_URL = url
@@ -103,6 +107,8 @@ async function applyMigrationsDirectly(databaseUrl: string): Promise<void> {
   }
 }
 
+const execFileAsync = promisify(execFile)
+
 async function seed(): Promise<void> {
   // Random per-run, never committed or logged — this is a disposable
   // ephemeral database, but there is no reason to use a guessable password.
@@ -111,15 +117,26 @@ async function seed(): Promise<void> {
   process.env.E2E_ADMIN_PASSWORD = adminPassword
 
   const tsxBin = path.join(ROOT, 'node_modules', '.bin', 'tsx')
-  execFileSync(tsxBin, ['prisma/seed.ts'], {
-    cwd: ROOT,
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      SEED_ADMIN_EMAIL: E2E_ADMIN_EMAIL,
-      SEED_ADMIN_PASSWORD: adminPassword,
-    },
-  })
+  // execFileSync (TAH-23 follow-up defect) deterministically broke the
+  // embedded-PGlite path: it blocks this process's event loop until the
+  // child exits, but the PGLiteSocketServer this child needs to connect to
+  // also runs on this process's event loop — starving its own dependency.
+  // The async execFile keeps this process's loop free to service that
+  // socket while awaiting the child. Harmless for the external-DATABASE_URL
+  // path (a real Postgres doesn't need this process's event loop at all).
+  try {
+    await execFileAsync(tsxBin, ['prisma/seed.ts'], {
+      cwd: ROOT,
+      env: {
+        ...process.env,
+        SEED_ADMIN_EMAIL: E2E_ADMIN_EMAIL,
+        SEED_ADMIN_PASSWORD: adminPassword,
+      },
+    })
+  } catch (error) {
+    const { stdout, stderr } = error as { stdout?: string; stderr?: string }
+    throw new Error(`prisma/seed.ts failed:\n${stdout ?? ''}${stderr ?? String(error)}`)
+  }
 }
 
 async function startApp(): Promise<ChildProcess> {
