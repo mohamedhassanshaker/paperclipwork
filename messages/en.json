@@ -4,7 +4,7 @@
   "loginSub": "Enter your credentials to manage customers.",
   "email": "Email",
   "password": "Password",
-  "demo": "Demo: any email, password of 8+ characters.",
+  "demo": "Sign in with the seeded admin account.",
   "brand": "Customer Hub",
   "menu": "Menu",
   "signOut": "Sign out",
