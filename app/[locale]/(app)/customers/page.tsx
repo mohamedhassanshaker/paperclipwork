@@ -1,19 +1,21 @@
 import { customerRepository } from "@/lib/repository/customer";
 import { CustomersScreen } from "./CustomersScreen";
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 25;
 
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
   const { items, total, totalAll } = await customerRepository.list({
     q,
-    page: 1,
+    page,
     pageSize: PAGE_SIZE,
   });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <section className="flex max-w-content flex-col gap-5 p-page">
@@ -22,6 +24,8 @@ export default async function CustomersPage({
         total={total}
         totalAll={totalAll}
         initialQuery={q ?? ""}
+        page={page}
+        totalPages={totalPages}
       />
     </section>
   );

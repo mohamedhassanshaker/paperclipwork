@@ -2,7 +2,7 @@ import { barHeightPercents } from "@/lib/chart-math";
 
 export interface BarChartProps {
   counts: readonly number[];
-  /** Position-based labels (not calendar-derived — interface-contract §6/ADR-001 appendix). */
+  /** Calendar-derived from each bucket's `month` key, not a fixed positional array (interface-contract §3). */
   labels: readonly string[];
   tooltipSuffix: string;
 }

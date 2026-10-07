@@ -6,6 +6,7 @@ import { Donut } from "@/components/charts/Donut";
 import { AreaChart } from "@/components/charts/AreaChart";
 import { RegionBars } from "@/components/charts/RegionBars";
 import { customerRepository } from "@/lib/repository/customer";
+import { monthLabelForBucket } from "@/lib/chart-math";
 import { REGION_SHARE, REVENUE_HEADLINE, REVENUE_MONTHLY } from "@/lib/demo-data";
 
 export default async function DashboardPage() {
@@ -16,7 +17,8 @@ export default async function DashboardPage() {
   // (interface-contract §3).
   const stats = await customerRepository.stats();
 
-  const monthLabels = t.raw("months") as string[];
+  const monthAbbr = t.raw("monthAbbr") as string[];
+  const monthLabels = stats.monthly.map((bucket) => monthLabelForBucket(bucket.month, monthAbbr));
   const regionNames = t.raw("regions") as string[];
   const revLabels = (t.raw("revLabels") as string[]).map((l) => ({ l }));
   const regions = REGION_SHARE.map((pct, i) => ({ name: regionNames[i], pct }));
@@ -45,12 +47,9 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-4">
         <Card className="flex flex-col gap-4 p-5">
-          <div className="flex items-baseline justify-between gap-3">
-            <div className="flex flex-col gap-0.5">
-              <div className="text-15 font-semibold">{t("newCustomers")}</div>
-              <div className="text-13 text-fg-muted">{t("last12")}</div>
-            </div>
-            <div className="text-13 font-medium text-primary-strong">{t("yoy")}</div>
+          <div className="flex flex-col gap-0.5">
+            <div className="text-15 font-semibold">{t("newCustomers")}</div>
+            <div className="text-13 text-fg-muted">{t("last12")}</div>
           </div>
           <BarChart
             counts={stats.monthly.map((m) => m.count)}

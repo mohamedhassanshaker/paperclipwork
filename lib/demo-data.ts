@@ -6,7 +6,6 @@
 // (`t("sampleDataLabel")`) alongside it. Values are lifted from the prototype.
 
 export const REVENUE_HEADLINE = "$244.2k";
-export const REVENUE_YOY_KEY = "yoy" as const;
 
 /** USD, last 12 months, oldest first — matches the prototype's own figures. */
 export const REVENUE_MONTHLY: readonly number[] = [

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   barHeightPercents,
   donutConicGradient,
+  monthLabelForBucket,
   revenueAreaPoints,
   revenueLinePoints,
 } from "./chart-math";
@@ -13,6 +14,23 @@ describe("barHeightPercents", () => {
 
   it("does not divide by zero when every count is zero", () => {
     expect(barHeightPercents([0, 0, 0])).toEqual([0, 0, 0]);
+  });
+});
+
+describe("monthLabelForBucket", () => {
+  const monthAbbr = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+
+  it("derives the label from the bucket's calendar month, not its position in the window", () => {
+    // A rolling trailing-12 window starting in November means bucket 0 is
+    // November, not whatever month would be first if the window started in
+    // January — the label must track the real month key.
+    expect(monthLabelForBucket("2025-11", monthAbbr)).toBe("N");
+    expect(monthLabelForBucket("2026-10", monthAbbr)).toBe("O");
+  });
+
+  it("indexes January as the first entry and December as the last", () => {
+    expect(monthLabelForBucket("2026-01", monthAbbr)).toBe("J");
+    expect(monthLabelForBucket("2026-12", monthAbbr)).toBe("D");
   });
 });
 

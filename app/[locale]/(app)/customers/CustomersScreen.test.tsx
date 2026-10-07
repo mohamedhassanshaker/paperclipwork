@@ -46,6 +46,8 @@ function renderScreen(props: Partial<React.ComponentProps<typeof CustomersScreen
           total={CUSTOMERS.length}
           totalAll={CUSTOMERS.length}
           initialQuery=""
+          page={1}
+          totalPages={1}
           {...props}
         />
       </ToastProvider>
@@ -110,6 +112,60 @@ describe("CustomersScreen — search", () => {
     vi.advanceTimersByTime(300);
 
     expect(replace).toHaveBeenCalledWith("/customers");
+  });
+
+  it("does not clobber further typing with a stale server round-trip", () => {
+    vi.useFakeTimers();
+    const { rerender } = renderScreen({ initialQuery: "" });
+
+    const input = screen.getByPlaceholderText(
+      "Search name, email or company…",
+    ) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "om" } });
+    vi.advanceTimersByTime(300);
+    expect(replace).toHaveBeenCalledWith("/customers?q=om");
+
+    // user keeps typing before the server round-trip for "om" lands
+    fireEvent.change(input, { target: { value: "omar" } });
+
+    // the stale response for "om" now arrives as a prop update
+    rerender(
+      <NextIntlClientProvider locale="en" messages={en}>
+        <ToastProvider>
+          <CustomersScreen
+            initialItems={CUSTOMERS}
+            total={CUSTOMERS.length}
+            totalAll={CUSTOMERS.length}
+            initialQuery="om"
+            page={1}
+            totalPages={1}
+          />
+        </ToastProvider>
+      </NextIntlClientProvider>,
+    );
+
+    expect(input.value).toBe("omar");
+  });
+});
+
+describe("CustomersScreen — pagination", () => {
+  afterEach(() => {
+    replace.mockClear();
+    refresh.mockClear();
+  });
+
+  it("hides pagination controls when there is only one page", () => {
+    renderScreen({ totalPages: 1 });
+    expect(screen.queryByText("Next")).not.toBeInTheDocument();
+  });
+
+  it("navigates with the page query param, preserving the active search", () => {
+    renderScreen({ initialQuery: "omar", page: 1, totalPages: 3 });
+
+    expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(replace).toHaveBeenCalledWith("/customers?q=omar&page=2");
   });
 });
 

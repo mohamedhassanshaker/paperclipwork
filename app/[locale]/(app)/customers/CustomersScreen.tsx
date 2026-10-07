@@ -28,6 +28,8 @@ export interface CustomersScreenProps {
   total: number;
   totalAll: number;
   initialQuery: string;
+  page: number;
+  totalPages: number;
 }
 
 export function CustomersScreen({
@@ -35,6 +37,8 @@ export function CustomersScreen({
   total,
   totalAll,
   initialQuery,
+  page,
+  totalPages,
 }: CustomersScreenProps) {
   const t = useTranslations();
   const router = useRouter();
@@ -45,20 +49,43 @@ export function CustomersScreen({
   const [dialogState, setDialogState] = useState<DialogState | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // The query value of our own in-flight `router.replace` navigation, so the
+  // sync effect below can tell "the server caught up with what we typed"
+  // apart from "the URL changed under us" (back/forward, a pasted link) —
+  // otherwise a server round-trip can land after further typing and stomp it.
+  const pendingQueryRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (pendingQueryRef.current !== null) {
+      const matchedOwnNavigation = pendingQueryRef.current === initialQuery;
+      pendingQueryRef.current = null;
+      if (matchedOwnNavigation) return;
+    }
     setSearchValue(initialQuery);
   }, [initialQuery]);
 
   useEffect(() => () => clearTimeout(debounceRef.current), []);
+
+  function navigate(params: { q?: string; page?: number }) {
+    const query = new URLSearchParams();
+    if (params.q) query.set("q", params.q);
+    if (params.page && params.page > 1) query.set("page", String(params.page));
+    const qs = query.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  }
 
   function handleSearchChange(event: ChangeEvent<HTMLInputElement>) {
     const value = event.target.value;
     setSearchValue(value);
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      router.replace(value ? `${pathname}?q=${encodeURIComponent(value)}` : pathname);
+      pendingQueryRef.current = value;
+      navigate({ q: value });
     }, SEARCH_DEBOUNCE_MS);
+  }
+
+  function handlePageChange(nextPage: number) {
+    navigate({ q: initialQuery, page: nextPage });
   }
 
   function handleSaved(_customer: Customer, mode: "create" | "edit") {
@@ -152,6 +179,32 @@ export function CustomersScreen({
           ))}
         </TableBody>
       </Table>
+
+      {totalPages > 1 ? (
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-13 text-fg-muted">
+            {t("pageOf", { page, totalPages })}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => handlePageChange(page - 1)}
+            >
+              {t("prevPage")}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => handlePageChange(page + 1)}
+            >
+              {t("nextPage")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {dialogState ? (
         <CustomerFormDialog

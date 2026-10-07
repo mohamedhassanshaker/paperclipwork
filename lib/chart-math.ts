@@ -7,6 +7,13 @@ export function barHeightPercents(counts: readonly number[]): number[] {
   return counts.map((count) => Math.round((count / max) * 100));
 }
 
+/** `monthKey` is a `YYYY-MM` bucket key (interface-contract §3); `monthAbbr` is a
+ * 12-entry catalogue indexed January (0) through December (11). */
+export function monthLabelForBucket(monthKey: string, monthAbbr: readonly string[]): string {
+  const monthNum = Number(monthKey.slice(5, 7));
+  return monthAbbr[monthNum - 1];
+}
+
 export function donutConicGradient(
   activePct: number,
   activeColor: string,
