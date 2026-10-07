@@ -1,5 +1,5 @@
 {
-  "description": "GHSA advisories that have been explicitly risk-accepted (SEC-04, TAH-24, Level 2 decision by the CTO). .github/scripts/check-npm-audit-allowlist.mjs fails the `npm audit` CI job on any advisory that is not listed here, or whose reviewBy date has passed. Do not add an entry without a recorded Level 2 risk-acceptance decision.",
+  "description": "GHSA advisories that have been explicitly risk-accepted at Level 2 by the CTO (SEC-04/TAH-24; TAH-34). Each entry records the issue the decision was made on in its rationale and acceptedBy. .github/scripts/check-npm-audit-allowlist.mjs fails the `npm audit` CI job on any advisory that is not listed here, or whose reviewBy date has passed. Do not add an entry without a recorded Level 2 risk-acceptance decision.",
   "accepted": [
     {
       "id": "GHSA-qx2v-qp2m-jg93",
@@ -39,6 +39,14 @@
       "title": "DeepmergeTS has stack exhaustion when merging recursive object graphs",
       "rationale": "SEC-04: reached only through @prisma/config in the Prisma CLI/migration tooling path, not the application request path — never invoked on untrusted runtime input.",
       "acceptedBy": "CTO (Level 2, TAH-24)",
+      "reviewBy": "2027-01-07"
+    },
+    {
+      "id": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+      "rationale": "TAH-34: unreachable in this application — pulled in solely via eslint-config-next (devDependency) -> @next/eslint-plugin-next -> fast-glob -> micromatch -> braces, and marked dev-only in package-lock.json, so it is never part of the Next.js build output or the server runtime. It only runs during `npm run lint`, expanding repo-authored glob patterns; the deeply nested pattern that triggers the stack exhaustion would have to be committed to our own lint config by us. No upstream fix exists: braces@3.0.3 is the latest published version and the advisory range is <=3.0.3, and micromatch@4.0.8 (latest) still depends on braces ^3.0.3, so an `overrides` pin has nothing to pin to. The npm-suggested downgrade to eslint-config-next@14.2.35 was tested and is not a net improvement — it trades this advisory for a different unreachable high (GHSA-5j98-mcp5-4vw2, glob CLI command injection) at the cost of a semver-major lint-config downgrade. Re-evaluate when braces publishes a patched release.",
+      "acceptedBy": "CTO (Level 2, TAH-34)",
       "reviewBy": "2027-01-07"
     }
   ]
