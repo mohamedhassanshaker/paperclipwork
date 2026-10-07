@@ -12,6 +12,13 @@ import { cn } from "@/lib/cn";
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+export type DialogSize = "default" | "sm";
+
+const SIZE_CLASSES: Record<DialogSize, string> = {
+  default: "max-w-[460px]",
+  sm: "max-w-[420px]",
+};
+
 export interface DialogProps {
   open: boolean;
   onClose: () => void;
@@ -19,6 +26,8 @@ export interface DialogProps {
   descriptionId?: string;
   children: ReactNode;
   className?: string;
+  /** `"default"` is the create/edit dialog width (460px); `"sm"` is the delete confirmation (420px). */
+  size?: DialogSize;
 }
 
 export function Dialog({
@@ -28,6 +37,7 @@ export function Dialog({
   descriptionId,
   children,
   className,
+  size = "default",
 }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -107,7 +117,8 @@ export function Dialog({
         tabIndex={-1}
         onKeyDown={handleKeyDown}
         className={cn(
-          "focus-ring flex w-full max-w-[460px] flex-col gap-4.5 rounded-card border border-border bg-surface p-6 shadow-dialog",
+          "focus-ring flex w-full flex-col gap-4.5 rounded-card border border-border bg-surface p-6 shadow-dialog",
+          SIZE_CLASSES[size],
           className,
         )}
       >

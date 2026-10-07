@@ -64,11 +64,11 @@ jobs:
       - name: Check migrations match schema
         run: |
           if [ -f prisma/schema.prisma ]; then
+            npx prisma migrate deploy
             npx prisma migrate diff \
               --from-schema-datasource prisma/schema.prisma \
               --to-schema-datamodel prisma/schema.prisma \
               --exit-code
-            npx prisma migrate deploy
           else
             echo "No prisma/schema.prisma yet — skipping (no-op until the data layer lands)."
           fi
@@ -124,7 +124,6 @@ jobs:
   npm-audit:
     name: npm audit
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -132,12 +131,12 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm audit --audit-level=high
+      - name: Check against risk-acceptance allowlist
+        run: node .github/scripts/check-npm-audit-allowlist.mjs
 
   secret-scan:
     name: secret scan
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -149,7 +148,6 @@ jobs:
   codeql:
     name: codeql
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       security-events: write
     steps:
@@ -158,10 +156,17 @@ jobs:
         with:
           languages: javascript-typescript
       - uses: github/codeql-action/analyze@v3
+        with:
+          output: codeql-results
+      - name: Fail on error-severity findings
+        run: node .github/scripts/check-codeql-results.mjs codeql-results
 
   container-scan:
     name: container scan
     runs-on: ubuntu-latest
+    # TODO(containerization migration): no Dockerfile exists yet, so this job
+    # is a documented no-op. Drop continue-on-error in the same change that
+    # adds the Dockerfile, so the scan starts gating the build immediately.
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
