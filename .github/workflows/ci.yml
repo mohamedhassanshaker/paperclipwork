@@ -64,11 +64,11 @@ jobs:
       - name: Check migrations match schema
         run: |
           if [ -f prisma/schema.prisma ]; then
+            npx prisma migrate deploy
             npx prisma migrate diff \
               --from-schema-datasource prisma/schema.prisma \
               --to-schema-datamodel prisma/schema.prisma \
               --exit-code
-            npx prisma migrate deploy
           else
             echo "No prisma/schema.prisma yet — skipping (no-op until the data layer lands)."
           fi
