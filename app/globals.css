@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — ADR-001 Appendix A (Customer Hub).
+ * Normative. Every value here is lifted verbatim from the handoff.
+ * Components must consume these tokens; no colour, radius, shadow, or
+ * sizing literal may appear outside this file.
+ */
+@theme {
+  /* Colour */
+  --color-primary: #7aab32;
+  --color-primary-hover: #679429;
+  --color-primary-strong: #4e7a1b;
+  --color-primary-subtle: #eef5e2;
+  --color-primary-subtle-hover: #f4f8ec;
+  --color-primary-ring: rgba(122, 171, 50, 0.18);
+  --color-primary-area: rgba(122, 171, 50, 0.14);
+  --color-bg: #fafafa;
+  --color-surface: #ffffff;
+  --color-border: #e4e4e7;
+  --color-border-subtle: #f4f4f5;
+  --color-fg: #09090b;
+  --color-fg-secondary: #52525b;
+  --color-fg-muted: #71717a;
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-border: #fecaca;
+  --color-danger-subtle: #fef2f2;
+  --color-on-primary: #fafafa;
+  --color-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Typography */
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-arabic: var(--font-ibm-plex-arabic), var(--font-geist), system-ui, sans-serif;
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-14: 14px;
+  --text-15: 15px;
+  --text-18: 18px;
+  --text-22: 22px;
+  --text-24: 24px;
+  --text-26: 26px;
+  --text-30: 30px;
+  --tracking-heading: -0.02em;
+
+  /* Radius */
+  --radius-swatch: 3px;
+  --radius-bar: 4px 4px 0 0;
+  --radius-control: 6px;
+  --radius-md: 8px;
+  --radius-card: 10px;
+  --radius-pill: 999px;
+
+  /* Sizing (fed through the spacing scale so w-/h-/p-/gap-/max-w- all resolve) */
+  --spacing-control: 36px;
+  --spacing-control-sm: 30px;
+  --spacing-toggle: 32px;
+  --spacing-nav-item: 34px;
+  --spacing-pill: 22px;
+  --spacing-header: 56px;
+  --spacing-sidebar: 240px;
+  --spacing-content: 1100px;
+  --spacing-page: 28px;
+  --spacing-avatar: 30px;
+  --spacing-logo-sidebar: 28px;
+  --spacing-logo-login: 36px;
+  --spacing-donut-outer: 160px;
+  --spacing-donut-inner: 108px;
+  --spacing-barchart: 180px;
+  --spacing-revenue-chart: 160px;
+  --spacing-progress: 8px;
+  --spacing-offset: 24px;
+
+  /* Shadow */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-dialog: 0 10px 30px rgba(0, 0, 0, 0.15);
+  --shadow-toast: 0 6px 20px rgba(0, 0, 0, 0.1);
+
+  /* Layering */
+  --z-dialog: 50;
+  --z-toast: 60;
+}
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--color-primary-strong);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  a:hover {
+    color: var(--color-fg-secondary);
+  }
+
+  input,
+  select,
+  button {
+    font-family: inherit;
+  }
+}
+
+@layer utilities {
+  /*
+   * The handoff sets outline:none on several controls with no replacement —
+   * an accessibility defect we do not reproduce. Every interactive element
+   * gets this visible ring instead (interface-contract §5.4).
+   */
+  .focus-ring {
+    outline: none;
+  }
+
+  .focus-ring:focus-visible {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-ring);
+  }
+}
