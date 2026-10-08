@@ -11,8 +11,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function LoginPage() {
   return (
     <div className="relative grid min-h-screen place-items-center bg-bg p-6">
-      <LanguageToggle className="absolute top-5 end-5" />
       <LoginForm />
+      <LanguageToggle className="absolute top-5 end-5" />
     </div>
   );
 }

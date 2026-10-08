@@ -35,9 +35,21 @@ function pathAfterLocale(pathname: string, locale: Locale): string {
 }
 
 function buildCsp(nonce: string): string {
+  // Next.js's dev-server React Fast Refresh runtime applies hot-reloaded
+  // modules via eval() (webpack's `webpackHotUpdate` path) — with no
+  // 'unsafe-eval', `next dev` throws an uncaught EvalError out of
+  // main-app.js on every navigation, which aborts hydration before any
+  // page script (including the login form's submit handler) ever attaches.
+  // Production builds never load this runtime, so 'unsafe-eval' never
+  // reaches a real deployment — see lib/auth.config.ts's useSecureCookies
+  // for the same NODE_ENV-gated pattern.
+  const scriptSrc =
+    process.env.NODE_ENV === "production"
+      ? `'self' 'nonce-${nonce}' 'strict-dynamic'`
+      : `'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`;
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    `script-src ${scriptSrc}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data:",
     "font-src 'self' data:",
