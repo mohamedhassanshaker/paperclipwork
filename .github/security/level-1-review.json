@@ -1,0 +1,30 @@
+{
+  "$comment": "Configuration for the binding Level 1 review gate (TAH-66). See docs/level-1-review-gate.md.",
+  "requiredDimensions": ["code-review"],
+  "securityReview": {
+    "$comment": "security-review becomes a required dimension when the PR carries one of these labels or touches one of these paths. PCI-sensitive surfaces per company operating rules v2 §16.",
+    "labels": ["pci-scope", "security-review-required", "high-risk"],
+    "paths": [
+      "prisma/migrations/**",
+      "prisma/schema.prisma",
+      "src/lib/auth/**",
+      "src/lib/payments/**",
+      "src/app/api/**",
+      "scripts/ensure-admin.ts",
+      "Dockerfile",
+      "docker-compose*.yml",
+      ".github/workflows/**",
+      ".github/scripts/**",
+      ".github/security/**"
+    ]
+  },
+  "gateFiles": [
+    ".github/workflows/level-1-review-gate.yml",
+    ".github/scripts/level-1-review-gate.mjs",
+    ".github/security/level-1-review.json"
+  ],
+  "legacyPullRequests": {
+    "$comment": "Pull requests that were already open when the gate landed (TAH-66). They were opened under the previous, prose-only rule and are exempt by explicit number. This list is closed: it never grows. Remove entries as the PRs close.",
+    "numbers": [9, 14, 16]
+  }
+}

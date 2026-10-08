@@ -1,0 +1,75 @@
+name: level-1-review-gate
+
+# Makes the binding Level 1 peer/security review verdict (company operating
+# rules v2 §2) enforceable by branch protection on main. See TAH-66 and
+# docs/level-1-review-gate.md.
+#
+# The job name below is the status-check context that is required on main. If
+# this workflow is deleted or the job renamed in a pull request, the context
+# never reports, stays pending, and the merge stays blocked — the gate fails
+# closed by removal as well as by verdict.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  # Deliberately not cancel-in-progress: the run that finishes last must be the
+  # one that reflects the current verdict state.
+  group: level-1-review-gate-${{ github.event.pull_request.number }}
+
+jobs:
+  level-1-review-gate:
+    name: level-1-review-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the gate definition from the base branch
+        uses: actions/checkout@v4
+        with:
+          # The script and its config are read from the base branch, not from
+          # the pull request, so a pull request cannot rewrite the control that
+          # judges it.
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: gate-base
+          persist-credentials: false
+
+      - name: Check out the pull request head
+        uses: actions/checkout@v4
+        with:
+          path: pr-head
+          persist-credentials: false
+
+      - name: Select the gate definition
+        id: select
+        run: |
+          if [ -f gate-base/.github/scripts/level-1-review-gate.mjs ]; then
+            echo "dir=gate-base" >> "$GITHUB_OUTPUT"
+            echo "Gate definition: base branch (${{ github.event.pull_request.base.ref }})."
+          else
+            # Bootstrap only: the pull request that introduces the gate. Once it
+            # merges, every later run reads the definition from the base branch.
+            echo "::notice::Gate not present on the base branch — bootstrapping from the pull request head."
+            echo "dir=pr-head" >> "$GITHUB_OUTPUT"
+            echo "Gate definition: pull request head (bootstrap)."
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Self-test the gate
+        # The gate proves its own decision logic against stubbed GitHub data on
+        # every run. If the self-test cannot run, the gate fails — a check that
+        # cannot run is a check that failed.
+        run: node ${{ steps.select.outputs.dir }}/.github/scripts/level-1-review-gate.test.mjs
+
+      - name: Evaluate Level 1 verdicts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node ${{ steps.select.outputs.dir }}/.github/scripts/level-1-review-gate.mjs
