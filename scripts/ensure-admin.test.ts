@@ -44,8 +44,8 @@ describe("ensure-admin CLI run()", () => {
     );
   });
 
-  it("passes forceReset through from ADMIN_FORCE_RESET=1", async () => {
-    ensureAdminMock.mockResolvedValueOnce({ outcome: "reset", email: "admin@company.com" });
+  it("treats ADMIN_FORCE_RESET=1 as inert — only --force-reset can force a reset", async () => {
+    ensureAdminMock.mockResolvedValueOnce({ outcome: "unchanged", email: "admin@company.com" });
     vi.spyOn(console, "log").mockImplementation(() => {});
 
     await run(
@@ -58,7 +58,7 @@ describe("ensure-admin CLI run()", () => {
     );
 
     expect(ensureAdminMock).toHaveBeenCalledWith(
-      expect.objectContaining({ forceReset: true }),
+      expect.objectContaining({ forceReset: false }),
     );
   });
 

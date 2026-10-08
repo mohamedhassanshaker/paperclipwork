@@ -12,7 +12,10 @@ export async function run(
   env: Record<string, string | undefined>,
   argv: string[],
 ): Promise<number> {
-  const forceReset = argv.includes("--force-reset") || env.ADMIN_FORCE_RESET === "1";
+  // One-shot by design: this runs in Railway's preDeployCommand on every deploy,
+  // so a sticky env var here would silently re-arm a credential overwrite on
+  // every subsequent deploy. Only an explicit, per-invocation argv flag can force it.
+  const forceReset = argv.includes("--force-reset");
 
   try {
     const result = await ensureAdmin({
