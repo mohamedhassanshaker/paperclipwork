@@ -5,7 +5,7 @@ import { Badge } from "./Badge";
 describe("Badge", () => {
   it("renders a filled pill for the active tone", () => {
     render(<Badge tone="active">Active</Badge>);
-    expect(screen.getByText("Active")).toHaveClass("bg-primary", "rounded-pill");
+    expect(screen.getByText("Active")).toHaveClass("bg-primary-strong", "rounded-pill");
   });
 
   it("renders an outlined pill for the inactive tone", () => {
