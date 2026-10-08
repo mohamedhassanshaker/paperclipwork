@@ -1,7 +1,8 @@
 // Sample data for the two dashboard cards with no backing data model
 // (ADR-001 §3): monthly revenue and region breakdown. There is no revenue or
 // region field on `Customer`, and inventing one is out of scope for a micro
-// CRM — this is recorded, deliberate technical debt, not an oversight.
+// CRM — this is a settled v1 scope decision (ASSUMPTION-1, BA ruling).
+// Reopening it is a separate product decision, not outstanding work.
 // Every consumer of this module must render the "Sample data" marker
 // (`t("sampleDataLabel")`) alongside it. Values are lifted from the prototype.
 
