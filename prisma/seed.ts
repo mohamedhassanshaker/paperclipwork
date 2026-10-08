@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url'
 import { prisma } from '../lib/db'
 import { ensureAdmin } from '../lib/ensure-admin'
 import { maskEmail } from '../lib/mask'
@@ -35,11 +36,18 @@ const SEED_CUSTOMERS = [
   },
 ]
 
-async function seedAdminUser() {
+async function seedAdminUser(argv: string[]) {
+  // One-shot by design: `prisma.seed` in package.json points here, so `prisma db
+  // seed` (and anything that invokes it, including `prisma migrate reset`) runs
+  // this with no args on every call. A sticky env var would silently re-arm a
+  // credential overwrite on every such invocation; only an explicit,
+  // per-invocation argv flag can force it (mirrors scripts/ensure-admin.ts).
+  const forceReset = argv.includes('--force-reset')
+
   const result = await ensureAdmin({
     email: process.env.SEED_ADMIN_EMAIL,
     password: process.env.SEED_ADMIN_PASSWORD,
-    forceReset: process.env.ADMIN_FORCE_RESET === '1',
+    forceReset,
   })
 
   switch (result.outcome) {
@@ -53,7 +61,7 @@ async function seedAdminUser() {
       console.log(`Admin user ${maskEmail(result.email)} already exists; leaving credential unchanged`)
       break
     case 'reset':
-      console.log(`ADMIN_FORCE_RESET set; overwrote credential for admin user ${maskEmail(result.email)}`)
+      console.log(`--force-reset set; overwrote credential for admin user ${maskEmail(result.email)}`)
       break
   }
 }
@@ -69,16 +77,23 @@ async function seedCustomers() {
   console.log(`Seeded ${SEED_CUSTOMERS.length} sample customers`)
 }
 
-async function main() {
-  await seedAdminUser()
+export async function run(argv: string[]): Promise<void> {
+  await seedAdminUser(argv)
   await seedCustomers()
 }
 
-main()
-  .catch((error) => {
-    console.error(error)
-    process.exitCode = 1
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
+// Only run as a side effect when invoked directly (`tsx prisma/seed.ts`),
+// never when `run` is imported for testing.
+const isDirectlyExecuted =
+  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href
+
+if (isDirectlyExecuted) {
+  run(process.argv.slice(2))
+    .catch((error) => {
+      console.error(error)
+      process.exitCode = 1
+    })
+    .finally(async () => {
+      await prisma.$disconnect()
+    })
+}
