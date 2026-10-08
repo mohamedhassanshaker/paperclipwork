@@ -11,7 +11,7 @@ export type ButtonSize = "default" | "sm";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "border-0 bg-primary text-on-primary hover:bg-primary-hover",
+    "border-0 bg-primary-strong text-on-primary hover:bg-primary-strong-hover",
   secondary:
     "border border-border bg-surface text-fg hover:bg-border-subtle",
   destructive: "border-0 bg-danger text-on-primary hover:bg-danger-hover",

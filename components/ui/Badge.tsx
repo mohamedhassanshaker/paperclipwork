@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 export type BadgeTone = "active" | "inactive";
 
 const toneClasses: Record<BadgeTone, string> = {
-  active: "border-0 bg-primary text-on-primary",
+  active: "border-0 bg-primary-strong text-on-primary",
   inactive: "border border-border text-fg-secondary",
 };
 

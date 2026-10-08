@@ -2,7 +2,10 @@
 
 /*
  * Design tokens — ADR-001 Appendix A (Customer Hub).
- * Normative. Every value here is lifted verbatim from the handoff.
+ * Normative. Every value here is lifted verbatim from the handoff, except
+ * tokens explicitly marked as an accessibility remediation (see decision-log)
+ * — those are derived from an existing handoff token to clear a WCAG AA
+ * failure the handoff itself didn't account for.
  * Components must consume these tokens; no colour, radius, shadow, or
  * sizing literal may appear outside this file.
  */
@@ -10,7 +13,13 @@
   /* Colour */
   --color-primary: #7aab32;
   --color-primary-hover: #679429;
+  /* also the Button `primary` and Badge `active` text-bearing background, and
+   * Sidebar active-nav-link text color (TAH-39) — check all three before changing */
   --color-primary-strong: #4e7a1b;
+  /* a11y remediation, not a handoff value: darkened from --color-primary-strong
+   * for the Button hover state; #7aab32 on --color-on-primary is 2.61:1, fails
+   * WCAG AA 4.5:1 (TAH-39, see decision-log) */
+  --color-primary-strong-hover: #456b18;
   --color-primary-subtle: #eef5e2;
   --color-primary-subtle-hover: #f4f8ec;
   --color-primary-ring: rgba(122, 171, 50, 0.18);
