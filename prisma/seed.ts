@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client'
-import { hashPassword } from '../lib/password'
-
-const prisma = new PrismaClient()
+import { prisma } from '../lib/db'
+import { ensureAdmin } from '../lib/ensure-admin'
+import { maskEmail } from '../lib/mask'
 
 // Synthetic sample data lifted verbatim from the design prototype's own SEED
 // array (testclaudedesign/project/Customers App.dc.html) — no real customers.
@@ -37,24 +36,26 @@ const SEED_CUSTOMERS = [
 ]
 
 async function seedAdminUser() {
-  const email = process.env.SEED_ADMIN_EMAIL
-  const password = process.env.SEED_ADMIN_PASSWORD
-
-  if (!email || !password) {
-    console.log(
-      'Skipping admin user seed: SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD must both be set ' +
-        '(e.g. via Railway secrets). Never hardcode a seed password.',
-    )
-    return
-  }
-
-  const passwordHash = await hashPassword(password)
-  await prisma.user.upsert({
-    where: { email: email.toLowerCase() },
-    update: { passwordHash },
-    create: { email: email.toLowerCase(), passwordHash, name: 'Admin' },
+  const result = await ensureAdmin({
+    email: process.env.SEED_ADMIN_EMAIL,
+    password: process.env.SEED_ADMIN_PASSWORD,
+    forceReset: process.env.ADMIN_FORCE_RESET === '1',
   })
-  console.log(`Seeded admin user ${email}`)
+
+  switch (result.outcome) {
+    case 'skipped':
+      console.log(`Skipping admin user seed: ${result.reason}`)
+      break
+    case 'created':
+      console.log(`Seeded admin user ${maskEmail(result.email)}`)
+      break
+    case 'unchanged':
+      console.log(`Admin user ${maskEmail(result.email)} already exists; leaving credential unchanged`)
+      break
+    case 'reset':
+      console.log(`ADMIN_FORCE_RESET set; overwrote credential for admin user ${maskEmail(result.email)}`)
+      break
+  }
 }
 
 async function seedCustomers() {
