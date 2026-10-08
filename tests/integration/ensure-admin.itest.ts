@@ -30,6 +30,13 @@ describe("ensureAdmin", () => {
     expect(await prisma.user.count()).toBe(0);
   });
 
+  it("fails loudly when SEED_ADMIN_EMAIL is not a valid email address", async () => {
+    await expect(ensureAdmin({ email: "admin", password: PASSWORD })).rejects.toBeInstanceOf(
+      EnsureAdminError,
+    );
+    expect(await prisma.user.count()).toBe(0);
+  });
+
   it("creates the admin user, lower-cased, when none exists", async () => {
     const result = await ensureAdmin({ email: EMAIL, password: PASSWORD });
     expect(result).toEqual({ outcome: "created", email: NORMALIZED_EMAIL });

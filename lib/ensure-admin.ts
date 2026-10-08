@@ -44,7 +44,14 @@ export async function ensureAdmin(options: EnsureAdminOptions): Promise<EnsureAd
     );
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
+  const emailCheck = loginSchema.shape.email.safeParse(email);
+  if (!emailCheck.success) {
+    throw new EnsureAdminError(
+      "SEED_ADMIN_EMAIL is not a valid email address; the admin user would be " +
+        "created but could never log in.",
+    );
+  }
+  const normalizedEmail = emailCheck.data;
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
   if (existing && !forceReset) {
